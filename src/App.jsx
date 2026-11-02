@@ -6,15 +6,15 @@ import NotificationBanner from './components/layout/NotificationBanner';
 import SupplierFormModal from './components/supplier/SupplierFormModal';
 import SupplierDetailModal from './components/supplier/SupplierDetailModal';
 
-// Pages
+// Decision Support System Pages (Website)
 import DashboardPage from './pages/DashboardPage';
 import SuppliersPage from './pages/SuppliersPage';
 import ComparePage from './pages/ComparePage';
 import AIDecisionSupportPage from './pages/AIDecisionSupportPage';
 import KnowledgeBasePage from './pages/KnowledgeBasePage';
 import ExpertSystemPage from './pages/ExpertSystemPage';
-import StatisticalReasoningPage from './pages/StatisticalReasoningPage';
-import AIProblemSolverPage from './pages/AIProblemSolverPage';
+import SupplierRiskPage from './pages/SupplierRiskPage';
+import FuzzyEvaluationPage from './pages/FuzzyEvaluationPage';
 import ReportsPage from './pages/ReportsPage';
 
 function AppContent() {
@@ -47,10 +47,10 @@ function AppContent() {
         return <KnowledgeBasePage />;
       case 'expert-system':
         return <ExpertSystemPage />;
-      case 'statistical':
-        return <StatisticalReasoningPage />;
-      case 'problem-solver':
-        return <AIProblemSolverPage />;
+      case 'supplier-risk':
+        return <SupplierRiskPage />;
+      case 'fuzzy-evaluation':
+        return <FuzzyEvaluationPage />;
       case 'reports':
         return <ReportsPage />;
       default:
@@ -59,7 +59,7 @@ function AppContent() {
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-50">
+    <div className="flex h-screen w-screen overflow-hidden bg-slate-100/70 text-slate-900 font-sans">
       {/* Sidebar Navigation */}
       <Sidebar />
 
