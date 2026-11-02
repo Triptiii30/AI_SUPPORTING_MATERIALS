@@ -25,3 +25,15 @@ yarn-error.log*
 Thumbs.db
 .vscode/
 .idea/
+
+# Agent & local harness files
+.agent/
+.agents/
+.gemini/
+.gsd/
+adapters/
+scripts/
+GSD-STYLE.md
+PROJECT_RULES.md
+VERSION
+model_capabilities.yaml

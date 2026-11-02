@@ -10,46 +10,55 @@ import {
   Cpu, 
   BrainCircuit, 
   HelpCircle, 
-  ChevronRight,
-  TrendingUp,
-  BarChart2,
-  FileCheck2,
-  Scale
+  ChevronRight, 
+  TrendingUp, 
+  BarChart2, 
+  FileCheck2, 
+  Scale, 
+  Activity, 
+  ShieldAlert,
+  Database,
+  ArrowDown
 } from 'lucide-react';
 import Badge from '../components/common/Badge';
 import { useApp } from '../context/AppContext';
 import { filterSuppliersByConstraints, scoreSuppliers } from '../algorithms/scoringEngine';
-import { evaluateExpertRules } from '../algorithms/expertSystem';
-import { evaluateFuzzySupplier } from '../algorithms/fuzzyLogic';
-import { calculateBayesTheorem, calculateCertaintyFactor, calculateProbabilityMetrics } from '../algorithms/bayesianReasoning';
+import { runFullIntegratedSupplierAnalysis } from '../algorithms/integratedDecisionEngine';
 
 export default function AIDecisionSupportPage() {
-  const { suppliers, requirements, setRequirements, weights, setWeights, availableProducts, setInspectSupplier, notify } = useApp();
+  const { 
+    suppliers, 
+    requirements, 
+    setRequirements, 
+    weights, 
+    setWeights, 
+    availableProducts, 
+    setInspectSupplier, 
+    notify 
+  } = useApp();
 
   const [hasGenerated, setHasGenerated] = useState(true);
-  const [selectedWinnerTab, setSelectedWinnerTab] = useState("overview");
+  const [overrideSupplierId, setOverrideSupplierId] = useState("");
 
   // Step 1: Constraint Filtering
   const filterResults = filterSuppliersByConstraints(suppliers, requirements);
   const eligibleSuppliers = filterResults.filter(f => f.isEligible).map(f => f.supplier);
-  const eliminatedCount = suppliers.length - eligibleSuppliers.length;
 
   // Step 2: Scoring Engine
   const scoredEligible = scoreSuppliers(eligibleSuppliers, weights, requirements);
   const topMatch = scoredEligible[0] || null;
 
-  // Step 3: Multi-AI Reasoning for the Top Match
-  const expertEvaluation = topMatch ? evaluateExpertRules(topMatch.supplier, requirements) : null;
-  const fuzzyEvaluation = topMatch ? evaluateFuzzySupplier(topMatch.supplier) : null;
-  const bayesEvaluation = topMatch ? calculateBayesTheorem({
-    priorReliable: 0.70,
-    likelihoodHQGivenR: topMatch.supplier.reliability >= 90 ? 0.92 : 0.82,
-    likelihoodHQGivenNotR: 0.20
+  // Determine supplier to analyze: override selection or top scored match
+  const analyzedSupplier = overrideSupplierId 
+    ? (suppliers.find(s => s.id === overrideSupplierId) || topMatch?.supplier)
+    : topMatch?.supplier;
+
+  // Step 3: Run Full Unified Supplier Decision Analysis
+  const integratedAnalysis = analyzedSupplier ? runFullIntegratedSupplierAnalysis(analyzedSupplier, {
+    suppliers,
+    products: availableProducts,
+    requirements
   }) : null;
-  const cfEvaluation = topMatch ? calculateCertaintyFactor(
-    topMatch.supplier.quality / 100,
-    topMatch.supplier.reliability / 100
-  ) : null;
 
   const handleGenerate = () => {
     setHasGenerated(true);
@@ -60,7 +69,7 @@ export default function AIDecisionSupportPage() {
         origin: { y: 0.6 }
       });
     } catch (e) {}
-    notify("AI Procurement Engine synthesized multi-criteria recommendation.");
+    notify("AI Procurement Engine synthesized multi-criteria recommendation across all paradigms.");
   };
 
   const handleWeightChange = (key, val) => {
@@ -74,23 +83,47 @@ export default function AIDecisionSupportPage() {
       {/* Page Title & Explanation */}
       <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-brand-50 text-brand-700 text-xs font-semibold mb-1">
-            <BrainCircuit className="w-3.5 h-3.5" />
-            <span>Multi-Model AI Decision Engine</span>
+          <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-800 text-xs font-semibold mb-1">
+            <BrainCircuit className="w-3.5 h-3.5 text-slate-700" />
+            <span>Integrated Supplier Decision Support Workflow</span>
           </div>
-          <h2 className="text-lg font-bold text-slate-800">AI Procurement Decision Support</h2>
-          <p className="text-xs text-slate-500">
-            Synthesizes Hard Constraint Filtering, MCDM Normalization, Rule Inference, Fuzzy Logic, and Bayesian Updating
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight">AI Supplier Decision Support Dashboard</h2>
+          <p className="text-xs text-slate-500 max-w-2xl">
+            Unified Decision Pipeline: Knowledge Base → Propositional Logic → Expert System Rules (+ Certainty Factors) → Fuzzy Suitability Evaluation → Bayesian Risk Estimation → Procurement Recommendation
           </p>
         </div>
 
-        <button
-          onClick={handleGenerate}
-          className="px-5 py-2.5 bg-gradient-to-r from-brand-600 to-sky-600 hover:from-brand-500 hover:to-sky-500 text-white font-bold text-xs rounded-xl shadow-md shadow-brand-500/25 flex items-center justify-center space-x-2 transition-all hover:scale-[1.02]"
-        >
-          <Sparkles className="w-4 h-4 text-sky-200" />
-          <span>Generate AI Recommendation</span>
-        </button>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={handleGenerate}
+            className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs flex items-center justify-center space-x-2 transition-all"
+          >
+            <Sparkles className="w-4 h-4 text-slate-300" />
+            <span>Run Decision Support Synthesis</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Decision Workflow Visual Ribbon */}
+      <div className="bg-slate-900 text-white rounded-xl p-3.5 border border-slate-800 text-xs font-mono">
+        <div className="text-[10px] uppercase font-bold text-slate-400 mb-2">
+          Procurement Reasoning Pipeline (Section 7 Architecture):
+        </div>
+        <div className="flex flex-wrap items-center gap-2 text-[11px]">
+          <span className="px-2.5 py-1 rounded bg-slate-800 border border-slate-700">1. Supplier Data</span>
+          <span className="text-slate-500">→</span>
+          <span className="px-2.5 py-1 rounded bg-slate-800 border border-slate-700">2. Knowledge Base (Frames)</span>
+          <span className="text-slate-500">→</span>
+          <span className="px-2.5 py-1 rounded bg-slate-800 border border-slate-700">3. Propositional Eligibility</span>
+          <span className="text-slate-500">→</span>
+          <span className="px-2.5 py-1 rounded bg-slate-800 border border-slate-700">4. Expert Rules (CF)</span>
+          <span className="text-slate-500">→</span>
+          <span className="px-2.5 py-1 rounded bg-slate-800 border border-slate-700">5. Fuzzy Suitability</span>
+          <span className="text-slate-500">→</span>
+          <span className="px-2.5 py-1 rounded bg-slate-800 border border-slate-700">6. Bayesian Risk</span>
+          <span className="text-slate-500">→</span>
+          <span className="px-2.5 py-1 rounded bg-white text-slate-900 font-bold">7. Decision Synthesis</span>
+        </div>
       </div>
 
       {/* Inputs Grid: Procurement Constraints & MCDM Weight Sliders */}
@@ -99,10 +132,10 @@ export default function AIDecisionSupportPage() {
         <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
             <div className="flex items-center space-x-2">
-              <Filter className="w-4 h-4 text-brand-600" />
-              <h3 className="text-sm font-bold text-slate-800">1. Procurement Hard Constraints</h3>
+              <Filter className="w-4 h-4 text-slate-700" />
+              <h3 className="text-sm font-bold text-slate-900">Procurement Hard Constraints</h3>
             </div>
-            <span className="text-xs text-slate-400">Strict filter gate</span>
+            <span className="text-xs text-slate-500 font-mono">Strict Qualification Filter</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
@@ -112,7 +145,7 @@ export default function AIDecisionSupportPage() {
               <select
                 value={requirements.product}
                 onChange={(e) => setRequirements({ ...requirements, product: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-brand-500 bg-white"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white font-medium"
               >
                 {availableProducts.map(p => (
                   <option key={p} value={p}>{p}</option>
@@ -123,21 +156,21 @@ export default function AIDecisionSupportPage() {
             {/* Maximum Budget */}
             <div>
               <label className="font-semibold text-slate-700 block mb-1">
-                Maximum Budget: <span className="text-brand-600 font-bold">₹{requirements.maxBudget.toLocaleString()}</span>
+                Maximum Budget: <span className="font-mono font-bold text-slate-900">₹{requirements.maxBudget.toLocaleString()}</span>
               </label>
               <input
                 type="number"
                 step="2000"
                 value={requirements.maxBudget}
                 onChange={(e) => setRequirements({ ...requirements, maxBudget: Number(e.target.value) })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-brand-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono"
               />
             </div>
 
             {/* Minimum Quality */}
             <div>
               <label className="font-semibold text-slate-700 block mb-1">
-                Minimum Quality: <span className="text-emerald-600 font-bold">{requirements.minQuality}%</span>
+                Minimum Quality: <span className="font-mono font-bold text-slate-900">{requirements.minQuality}%</span>
               </label>
               <input
                 type="range"
@@ -145,176 +178,146 @@ export default function AIDecisionSupportPage() {
                 max="95"
                 value={requirements.minQuality}
                 onChange={(e) => setRequirements({ ...requirements, minQuality: Number(e.target.value) })}
-                className="w-full accent-emerald-600"
+                className="w-full accent-slate-900"
               />
-              <div className="flex justify-between text-[10px] text-slate-400">
-                <span>60%</span>
-                <span>Current: {requirements.minQuality}%</span>
-                <span>95%</span>
-              </div>
             </div>
 
             {/* Maximum Delivery Lead Time */}
             <div>
               <label className="font-semibold text-slate-700 block mb-1">
-                Max Delivery Time: <span className="text-violet-600 font-bold">{requirements.maxDelivery} Days</span>
+                Max Delivery Time: <span className="font-mono font-bold text-slate-900">{requirements.maxDelivery} Days</span>
               </label>
               <input
                 type="range"
                 min="2"
-                max="12"
+                max="14"
                 value={requirements.maxDelivery}
                 onChange={(e) => setRequirements({ ...requirements, maxDelivery: Number(e.target.value) })}
-                className="w-full accent-violet-600"
+                className="w-full accent-slate-900"
               />
-              <div className="flex justify-between text-[10px] text-slate-400">
-                <span>2 days</span>
-                <span>Current: {requirements.maxDelivery}d</span>
-                <span>12 days</span>
-              </div>
             </div>
 
             {/* Minimum Reliability */}
             <div>
               <label className="font-semibold text-slate-700 block mb-1">
-                Minimum Reliability: <span className="text-sky-600 font-bold">{requirements.minReliability}%</span>
+                Min SLA Reliability: <span className="font-mono font-bold text-slate-900">{requirements.minReliability}%</span>
               </label>
               <input
                 type="range"
-                min="65"
-                max="98"
+                min="60"
+                max="95"
                 value={requirements.minReliability}
                 onChange={(e) => setRequirements({ ...requirements, minReliability: Number(e.target.value) })}
-                className="w-full accent-sky-600"
+                className="w-full accent-slate-900"
               />
-              <div className="flex justify-between text-[10px] text-slate-400">
-                <span>65%</span>
-                <span>Current: {requirements.minReliability}%</span>
-                <span>98%</span>
-              </div>
             </div>
 
-            {/* Required Capacity */}
+            {/* Required Batch Capacity */}
             <div>
               <label className="font-semibold text-slate-700 block mb-1">
-                Required Monthly Capacity: <span className="text-amber-600 font-bold">{requirements.requiredCapacity} units</span>
+                Minimum Batch Capacity: <span className="font-mono font-bold text-slate-900">{requirements.requiredCapacity.toLocaleString()} Units</span>
               </label>
               <input
                 type="number"
-                step="50"
+                step="100"
                 value={requirements.requiredCapacity}
                 onChange={(e) => setRequirements({ ...requirements, requiredCapacity: Number(e.target.value) })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-brand-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono"
               />
             </div>
-          </div>
-
-          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-            <span>Filter Status: <strong>{eligibleSuppliers.length}</strong> passed, <strong>{eliminatedCount}</strong> filtered out</span>
-            <span className="text-brand-600 font-semibold cursor-pointer hover:underline" onClick={() => {
-              setRequirements({
-                product: "Industrial Steel",
-                maxBudget: 60000,
-                minQuality: 85,
-                maxDelivery: 7,
-                minReliability: 85,
-                requiredCapacity: 900
-              });
-            }}>Reset Standard Constraints</span>
           </div>
         </div>
 
-        {/* Right: MCDM Weights Configuration Sliders (5 Cols) */}
-        <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-            <div className="flex items-center space-x-2">
-              <Sliders className="w-4 h-4 text-brand-600" />
-              <h3 className="text-sm font-bold text-slate-800">2. Configurable Decision Weights</h3>
-            </div>
-            <span className={`text-xs font-bold ${totalWeight === 100 ? 'text-emerald-600' : 'text-amber-600'}`}>
-              Total: {totalWeight}%
-            </span>
-          </div>
-
-          <div className="space-y-3.5 text-xs">
-            {/* Quality Slider */}
-            <div>
-              <div className="flex justify-between font-semibold mb-1">
-                <span className="text-slate-600">Quality Priority</span>
-                <span className="text-emerald-700 font-bold">{weights.quality}%</span>
+        {/* Right: MCDM Weights & Priority Sliders (5 Cols) */}
+        <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+              <div className="flex items-center space-x-2">
+                <Sliders className="w-4 h-4 text-slate-700" />
+                <h3 className="text-sm font-bold text-slate-900">Multi-Criteria Weights</h3>
               </div>
-              <input
-                type="range"
-                min="5"
-                max="50"
-                value={weights.quality}
-                onChange={(e) => handleWeightChange('quality', e.target.value)}
-                className="w-full accent-emerald-600"
-              />
+              <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded ${
+                totalWeight === 100 ? "bg-slate-100 text-slate-800" : "bg-amber-100 text-amber-800"
+              }`}>
+                Sum: {totalWeight}%
+              </span>
             </div>
 
-            {/* Reliability Slider */}
-            <div>
-              <div className="flex justify-between font-semibold mb-1">
-                <span className="text-slate-600">Reliability Priority</span>
-                <span className="text-sky-700 font-bold">{weights.reliability}%</span>
+            <div className="space-y-3 text-xs">
+              <div>
+                <div className="flex justify-between font-semibold mb-1">
+                  <span className="text-slate-600">Quality Priority</span>
+                  <span className="font-mono font-bold text-slate-900">{weights.quality}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="5"
+                  max="50"
+                  value={weights.quality}
+                  onChange={(e) => handleWeightChange('quality', e.target.value)}
+                  className="w-full accent-slate-900"
+                />
               </div>
-              <input
-                type="range"
-                min="5"
-                max="50"
-                value={weights.reliability}
-                onChange={(e) => handleWeightChange('reliability', e.target.value)}
-                className="w-full accent-sky-600"
-              />
-            </div>
 
-            {/* Cost Slider */}
-            <div>
-              <div className="flex justify-between font-semibold mb-1">
-                <span className="text-slate-600">Cost Priority</span>
-                <span className="text-amber-700 font-bold">{weights.cost}%</span>
+              <div>
+                <div className="flex justify-between font-semibold mb-1">
+                  <span className="text-slate-600">Reliability Priority</span>
+                  <span className="font-mono font-bold text-slate-900">{weights.reliability}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="5"
+                  max="50"
+                  value={weights.reliability}
+                  onChange={(e) => handleWeightChange('reliability', e.target.value)}
+                  className="w-full accent-slate-900"
+                />
               </div>
-              <input
-                type="range"
-                min="5"
-                max="50"
-                value={weights.cost}
-                onChange={(e) => handleWeightChange('cost', e.target.value)}
-                className="w-full accent-amber-600"
-              />
-            </div>
 
-            {/* Delivery Slider */}
-            <div>
-              <div className="flex justify-between font-semibold mb-1">
-                <span className="text-slate-600">Delivery Lead Priority</span>
-                <span className="text-violet-700 font-bold">{weights.delivery}%</span>
+              <div>
+                <div className="flex justify-between font-semibold mb-1">
+                  <span className="text-slate-600">Cost Priority</span>
+                  <span className="font-mono font-bold text-slate-900">{weights.cost}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="5"
+                  max="50"
+                  value={weights.cost}
+                  onChange={(e) => handleWeightChange('cost', e.target.value)}
+                  className="w-full accent-slate-900"
+                />
               </div>
-              <input
-                type="range"
-                min="5"
-                max="40"
-                value={weights.delivery}
-                onChange={(e) => handleWeightChange('delivery', e.target.value)}
-                className="w-full accent-violet-600"
-              />
-            </div>
 
-            {/* Capacity Slider */}
-            <div>
-              <div className="flex justify-between font-semibold mb-1">
-                <span className="text-slate-600">Capacity Priority</span>
-                <span className="text-teal-700 font-bold">{weights.capacity}%</span>
+              <div>
+                <div className="flex justify-between font-semibold mb-1">
+                  <span className="text-slate-600">Delivery Lead Priority</span>
+                  <span className="font-mono font-bold text-slate-900">{weights.delivery}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="5"
+                  max="40"
+                  value={weights.delivery}
+                  onChange={(e) => handleWeightChange('delivery', e.target.value)}
+                  className="w-full accent-slate-900"
+                />
               </div>
-              <input
-                type="range"
-                min="5"
-                max="40"
-                value={weights.capacity}
-                onChange={(e) => handleWeightChange('capacity', e.target.value)}
-                className="w-full accent-teal-600"
-              />
+
+              <div>
+                <div className="flex justify-between font-semibold mb-1">
+                  <span className="text-slate-600">Capacity Priority</span>
+                  <span className="font-mono font-bold text-slate-900">{weights.capacity}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="5"
+                  max="40"
+                  value={weights.capacity}
+                  onChange={(e) => handleWeightChange('capacity', e.target.value)}
+                  className="w-full accent-slate-900"
+                />
+              </div>
             </div>
           </div>
 
@@ -322,7 +325,7 @@ export default function AIDecisionSupportPage() {
             <span>Normalizes factors dynamically into 100% total</span>
             <button
               onClick={() => setWeights({ quality: 25, reliability: 25, cost: 20, delivery: 15, capacity: 15 })}
-              className="text-brand-600 font-semibold hover:underline"
+              className="text-slate-800 font-semibold hover:underline"
             >
               Reset 25/25/20/15/15
             </button>
@@ -334,19 +337,19 @@ export default function AIDecisionSupportPage() {
       <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
           <div className="flex items-center space-x-2">
-            <FileCheck2 className="w-4 h-4 text-brand-600" />
-            <h3 className="text-sm font-bold text-slate-800">3. Constraint Filtering Stage (Hard Gates)</h3>
+            <FileCheck2 className="w-4 h-4 text-slate-700" />
+            <h3 className="text-sm font-bold text-slate-900">Constraint Filtering Stage (Hard Gates)</h3>
           </div>
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-slate-500 font-mono">
             {eligibleSuppliers.length} of {suppliers.length} candidates qualify for scoring
           </span>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-500 uppercase font-bold text-[10px] tracking-wider">
+          <table className="w-full text-left text-xs font-mono">
+            <thead className="bg-slate-100 text-slate-700 uppercase font-bold text-[10px] tracking-wider">
               <tr>
-                <th className="py-2.5 px-3">Supplier</th>
+                <th className="py-2.5 px-3">Supplier Name</th>
                 <th className="py-2.5 px-2">Cost vs Budget</th>
                 <th className="py-2.5 px-2">Quality</th>
                 <th className="py-2.5 px-2">Lead Time</th>
@@ -355,45 +358,45 @@ export default function AIDecisionSupportPage() {
                 <th className="py-2.5 px-3">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 text-[11px]">
               {filterResults.map(({ supplier, isEligible, checks, failedReasons }) => (
-                <tr key={supplier.id} className={isEligible ? "bg-white" : "bg-rose-50/20 text-slate-400"}>
-                  <td className="py-2.5 px-3 font-semibold text-slate-800">
+                <tr key={supplier.id} className={isEligible ? "bg-white" : "bg-slate-50 text-slate-400"}>
+                  <td className="py-2.5 px-3 font-semibold text-slate-900">
                     {supplier.name}
                     {!checks.productMatch && (
-                      <span className="block text-[10px] text-rose-500 font-normal">
+                      <span className="block text-[10px] text-slate-500 font-normal">
                         ({supplier.product})
                       </span>
                     )}
                   </td>
                   <td className="py-2.5 px-2 font-medium">
-                    <span className={checks.costCheck ? "text-slate-700" : "text-rose-600 font-bold"}>
+                    <span className={checks.costCheck ? "text-slate-800" : "text-rose-600 font-bold"}>
                       ₹{supplier.cost.toLocaleString()}
                     </span>
                   </td>
                   <td className="py-2.5 px-2 font-medium">
-                    <span className={checks.qualityCheck ? "text-emerald-700" : "text-rose-600 font-bold"}>
+                    <span className={checks.qualityCheck ? "text-slate-800 font-bold" : "text-rose-600 font-bold"}>
                       {supplier.quality}%
                     </span>
                   </td>
                   <td className="py-2.5 px-2 font-medium">
-                    <span className={checks.deliveryCheck ? "text-slate-700" : "text-rose-600 font-bold"}>
+                    <span className={checks.deliveryCheck ? "text-slate-800" : "text-rose-600 font-bold"}>
                       {supplier.deliveryTime}d
                     </span>
                   </td>
                   <td className="py-2.5 px-2 font-medium">
-                    <span className={checks.reliabilityCheck ? "text-sky-700" : "text-rose-600 font-bold"}>
+                    <span className={checks.reliabilityCheck ? "text-slate-800 font-bold" : "text-rose-600 font-bold"}>
                       {supplier.reliability}%
                     </span>
                   </td>
                   <td className="py-2.5 px-2 font-medium">
-                    <span className={checks.capacityCheck ? "text-slate-700" : "text-rose-600 font-bold"}>
+                    <span className={checks.capacityCheck ? "text-slate-800" : "text-rose-600 font-bold"}>
                       {supplier.capacity}u
                     </span>
                   </td>
                   <td className="py-2.5 px-3">
                     {isEligible ? (
-                      <span className="inline-flex items-center text-emerald-700 font-bold gap-1 text-[11px]">
+                      <span className="inline-flex items-center text-emerald-800 font-bold gap-1 text-[11px]">
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Eligible
                       </span>
                     ) : (
@@ -409,140 +412,164 @@ export default function AIDecisionSupportPage() {
         </div>
       </div>
 
-      {/* FINAL AI RECOMMENDATION DASHBOARD */}
-      {topMatch ? (
-        <div className="bg-gradient-to-br from-slate-900 via-slate-850 to-brand-950 rounded-2xl p-6 text-white shadow-xl border border-slate-700 space-y-6">
-          {/* Main Title & Champion Banner */}
+      {/* CENTRAL MULTI-PARADIGM DECISION SUPPORT RESULTS */}
+      {analyzedSupplier && integratedAnalysis && (
+        <div className="bg-slate-900 text-white rounded-2xl p-6 shadow-xl border border-slate-800 space-y-6">
+          {/* Header & Winner Presentation */}
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between pb-5 border-b border-slate-800 gap-4">
             <div className="flex items-center space-x-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center text-white shadow-lg shadow-brand-500/30 shrink-0">
-                <Award className="w-8 h-8" />
+              <div className="w-14 h-14 rounded-2xl bg-white text-slate-900 flex items-center justify-center font-bold shadow-md shrink-0">
+                <Award className="w-8 h-8 text-slate-900" />
               </div>
               <div>
-                <span className="text-[11px] font-bold tracking-wider uppercase text-emerald-400">
-                  AI Procurement Recommendation
+                <span className="text-[11px] font-bold tracking-wider uppercase text-slate-400">
+                  Primary Decision Candidate Under Audit
                 </span>
                 <h3 className="text-2xl font-black text-white tracking-tight">
-                  {topMatch.supplier.name}
+                  {analyzedSupplier.name}
                 </h3>
                 <p className="text-xs text-slate-300">
-                  Product: {topMatch.supplier.product} • Logistics Base: {topMatch.supplier.location}
+                  Product: {analyzedSupplier.product} • Base: {analyzedSupplier.location}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center space-x-4 bg-slate-900/80 px-4 py-2.5 rounded-xl border border-slate-800">
-              <div className="text-right">
-                <span className="text-[10px] uppercase font-bold text-slate-400 block">Overall Decision Score</span>
-                <span className="text-3xl font-black text-emerald-400 leading-none">
-                  {topMatch.finalScore}%
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              {/* Supplier switcher dropdown */}
+              <div className="flex items-center space-x-2 text-xs">
+                <span className="text-slate-400">Analyze Alternate:</span>
+                <select
+                  value={overrideSupplierId || analyzedSupplier.id}
+                  onChange={(e) => setOverrideSupplierId(e.target.value)}
+                  className="bg-slate-800 text-white border border-slate-700 rounded-lg px-2.5 py-1.5 font-medium"
+                >
+                  {suppliers.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {topMatch && topMatch.supplier.id === analyzedSupplier.id && (
+                <div className="bg-slate-800 px-4 py-2 rounded-xl border border-slate-700 text-right">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">MCDM Linear Score</span>
+                  <span className="text-2xl font-black text-white leading-none">
+                    {topMatch.finalScore}%
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 4 Core Reasoning Paradigms Individual Output Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+            {/* 1. Propositional Logic Eligibility */}
+            <div className="p-4 rounded-xl bg-slate-800/80 border border-slate-700 flex flex-col justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  1. Propositional Logic
                 </span>
+                <h4 className="text-sm font-bold text-white mb-1.5">
+                  {integratedAnalysis.isEligible ? "ELIGIBLE VENDOR" : "INELIGIBLE"}
+                </h4>
+                <p className="text-slate-300 text-[11px] leading-relaxed">
+                  Formula: P ∧ Q ∧ R evaluated against verified supplier performance thresholds.
+                </p>
               </div>
-              <Badge variant="success" className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 text-xs px-2.5 py-1 font-bold uppercase">
-                {expertEvaluation?.status || "Highly Recommended"}
-              </Badge>
+              <div className="mt-3 pt-2 border-t border-slate-700/80 font-mono text-[10px] text-slate-400">
+                Truth Values: P={String(integratedAnalysis.propositional.propEval.values.P)}, Q={String(integratedAnalysis.propositional.propEval.values.Q)}, R={String(integratedAnalysis.propositional.propEval.values.R)}
+              </div>
+            </div>
+
+            {/* 2. Rule-Based Expert System (+ CF) */}
+            <div className="p-4 rounded-xl bg-slate-800/80 border border-slate-700 flex flex-col justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  2. Expert System (+ CF)
+                </span>
+                <h4 className="text-sm font-bold text-white mb-1.5">
+                  {integratedAnalysis.expertSystem.recommendation}
+                </h4>
+                <p className="text-slate-300 text-[11px] leading-relaxed">
+                  Confidence: Certainty Factor CF = {integratedAnalysis.expertSystem.confidenceCF >= 0 ? `+${integratedAnalysis.expertSystem.confidenceCF.toFixed(2)}` : integratedAnalysis.expertSystem.confidenceCF.toFixed(2)} ({integratedAnalysis.expertSystem.confidencePercentage}%)
+                </p>
+              </div>
+              <div className="mt-3 pt-2 border-t border-slate-700/80 font-mono text-[10px] text-slate-400">
+                {integratedAnalysis.expertSystem.firedCount} Rules Fired via Forward Chaining
+              </div>
+            </div>
+
+            {/* 3. Mamdani Fuzzy Logic */}
+            <div className="p-4 rounded-xl bg-slate-800/80 border border-slate-700 flex flex-col justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  3. Fuzzy Logic (Mamdani)
+                </span>
+                <h4 className="text-sm font-bold text-white mb-1.5 font-mono">
+                  Suitability: {integratedAnalysis.fuzzyLogic.suitabilityScore} / 100
+                </h4>
+                <p className="text-slate-300 text-[11px] leading-relaxed">
+                  Linguistic Class: {integratedAnalysis.fuzzyLogic.recommendationCategory}
+                </p>
+              </div>
+              <div className="mt-3 pt-2 border-t border-slate-700/80 font-mono text-[10px] text-slate-400">
+                Centroid Center-of-Gravity Defuzzification
+              </div>
+            </div>
+
+            {/* 4. Bayes' Theorem Posterior Risk */}
+            <div className="p-4 rounded-xl bg-slate-800/80 border border-slate-700 flex flex-col justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  4. Bayes' Theorem Risk
+                </span>
+                <h4 className="text-sm font-bold text-white mb-1.5 font-mono">
+                  {(integratedAnalysis.bayesTheorem.posteriorAGivenB * 100).toFixed(1)}% Default Risk
+                </h4>
+                <p className="text-slate-300 text-[11px] leading-relaxed">
+                  Prior Lapse: {(integratedAnalysis.bayesTheorem.priorA * 100).toFixed(1)}% • P(Delay): {integratedAnalysis.bayesTheorem.marginalEvidenceB.toFixed(3)}
+                </p>
+              </div>
+              <div className="mt-3 pt-2 border-t border-slate-700/80 font-mono text-[10px] text-slate-400">
+                Law of Total Probability Applied
+              </div>
             </div>
           </div>
 
-          {/* Transparent Score Calculation Breakdown (Section 9 Requirement) */}
-          <div className="bg-slate-900/90 rounded-xl p-4 border border-slate-800">
-            <div className="flex items-center justify-between mb-2">
+          {/* Theoretical Comparison Table Contrasting Paradigms */}
+          <div className="bg-slate-950 rounded-xl p-4 border border-slate-800 space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                <Scale className="w-3.5 h-3.5 text-brand-400" />
-                Transparent Decision Score Calculation Breakdown
+                <Scale className="w-4 h-4 text-slate-400" />
+                Comparative Analysis of AI Reasoning Paradigms for Procurement
               </h4>
-              <span className="text-[11px] font-mono text-emerald-400">
-                Formula: ∑ (Normalized Attribute × Weight) = {topMatch.finalScore}%
-              </span>
+              <span className="text-[11px] text-slate-500 font-mono">Distinct Non-Merged Outputs</span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-3">
-              <div className="p-2.5 rounded-lg bg-slate-800/60 border border-slate-700/60">
-                <span className="text-[10px] text-slate-400 block">Quality ({weights.quality}%)</span>
-                <span className="text-sm font-bold text-emerald-400">+{topMatch.contributions.quality} pts</span>
-                <span className="text-[10px] text-slate-500 block">Rating: {topMatch.supplier.quality}%</span>
-              </div>
-
-              <div className="p-2.5 rounded-lg bg-slate-800/60 border border-slate-700/60">
-                <span className="text-[10px] text-slate-400 block">Reliability ({weights.reliability}%)</span>
-                <span className="text-sm font-bold text-sky-400">+{topMatch.contributions.reliability} pts</span>
-                <span className="text-[10px] text-slate-500 block">Rating: {topMatch.supplier.reliability}%</span>
-              </div>
-
-              <div className="p-2.5 rounded-lg bg-slate-800/60 border border-slate-700/60">
-                <span className="text-[10px] text-slate-400 block">Cost ({weights.cost}%)</span>
-                <span className="text-sm font-bold text-amber-400">+{topMatch.contributions.cost} pts</span>
-                <span className="text-[10px] text-slate-500 block">Quote: ₹{topMatch.supplier.cost.toLocaleString()}</span>
-              </div>
-
-              <div className="p-2.5 rounded-lg bg-slate-800/60 border border-slate-700/60">
-                <span className="text-[10px] text-slate-400 block">Delivery ({weights.delivery}%)</span>
-                <span className="text-sm font-bold text-violet-400">+{topMatch.contributions.delivery} pts</span>
-                <span className="text-[10px] text-slate-500 block">Lead: {topMatch.supplier.deliveryTime} days</span>
-              </div>
-
-              <div className="p-2.5 rounded-lg bg-slate-800/60 border border-slate-700/60">
-                <span className="text-[10px] text-slate-400 block">Capacity ({weights.capacity}%)</span>
-                <span className="text-sm font-bold text-teal-400">+{topMatch.contributions.capacity} pts</span>
-                <span className="text-[10px] text-slate-500 block">Vol: {topMatch.supplier.capacity} units</span>
-              </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs font-mono">
+                <thead className="bg-slate-900 text-slate-400 uppercase text-[10px]">
+                  <tr>
+                    <th className="py-2 px-3">Reasoning Paradigm</th>
+                    <th className="py-2 px-3">Theoretical Basis</th>
+                    <th className="py-2 px-3">Output Structure</th>
+                    <th className="py-2 px-3">Model Result</th>
+                    <th className="py-2 px-3">Mathematical Rationale</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/80 text-[11px]">
+                  {integratedAnalysis.paradigmComparisons.map((p, idx) => (
+                    <tr key={idx} className="hover:bg-slate-900/50">
+                      <td className="py-2 px-3 font-bold text-white">{p.paradigm}</td>
+                      <td className="py-2 px-3 text-slate-400">{p.theoreticalBasis}</td>
+                      <td className="py-2 px-3 text-slate-300">{p.outputForm}</td>
+                      <td className="py-2 px-3 font-bold text-white">{p.result}</td>
+                      <td className="py-2 px-3 text-slate-300 font-sans text-[11px] leading-snug">{p.interpretation}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
-
-          {/* Explainable AI Narrative (Section 24 Requirement) */}
-          <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-brand-300 mb-1 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-brand-400" />
-              Explainable AI (XAI) Selection Rationale
-            </h4>
-            <p className="text-xs text-slate-200 leading-relaxed">
-              <strong className="text-white">{topMatch.supplier.name}</strong> was selected as the optimal vendor because it satisfies all mandatory constraints (within budget limit of ₹{requirements.maxBudget.toLocaleString()}, achieves ≥{requirements.minQuality}% quality, and delivers in ≤{requirements.maxDelivery} days) and achieved the highest weighted composite score of <strong className="text-emerald-400">{topMatch.finalScore}%</strong> among eligible suppliers. It showed exceptional performance in Quality ({topMatch.supplier.quality}%) and Reliability ({topMatch.supplier.reliability}%), which together formed {weights.quality + weights.reliability}% of your decision priority.
-            </p>
-          </div>
-
-          {/* AI Multi-Model Reasoning Summary Badges */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">Expert System</span>
-              <span className="text-sm font-bold text-emerald-400">{expertEvaluation?.status || "Suitable"}</span>
-              <span className="text-[10px] text-slate-400 block mt-0.5">{expertEvaluation?.firedCount} rules triggered</span>
-            </div>
-
-            <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">Fuzzy Evaluation</span>
-              <span className="text-sm font-bold text-brand-300">{fuzzyEvaluation?.linguisticVerdict || "High"}</span>
-              <span className="text-[10px] text-slate-400 block mt-0.5">Defuzzified: {fuzzyEvaluation?.defuzzifiedScore}%</span>
-            </div>
-
-            <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">Bayesian Confidence</span>
-              <span className="text-sm font-bold text-sky-400">{bayesEvaluation ? `${(bayesEvaluation.posterior * 100).toFixed(1)}%` : "89.2%"}</span>
-              <span className="text-[10px] text-slate-400 block mt-0.5">P(Reliable | High Quality)</span>
-            </div>
-
-            <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">Certainty Factor</span>
-              <span className="text-sm font-bold text-violet-400">{cfEvaluation ? `+${cfEvaluation.combinedCF}` : "+0.87"}</span>
-              <span className="text-[10px] text-slate-400 block mt-0.5">Combined Confidence: {cfEvaluation?.confidencePercentage}%</span>
-            </div>
-          </div>
-
-          <div className="pt-2 flex justify-end">
-            <button
-              onClick={() => setInspectSupplier(topMatch.supplier)}
-              className="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-semibold shadow-md transition-all"
-            >
-              Inspect Complete Supplier Dossier
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-rose-50 border border-rose-200 rounded-2xl p-6 text-center text-rose-800">
-          <XCircle className="w-8 h-8 text-rose-500 mx-auto mb-2" />
-          <h4 className="font-bold text-sm">No Eligible Suppliers Found</h4>
-          <p className="text-xs text-rose-600 mt-1 max-w-md mx-auto">
-            All registered suppliers failed one or more hard constraints. Please relax the minimum quality, increase the budget, or adjust lead times.
-          </p>
         </div>
       )}
     </div>
